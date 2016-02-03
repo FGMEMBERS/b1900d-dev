@@ -331,6 +331,66 @@
         <max>2000</max>
     </filter>
 
+    <pi-simple-controller> <!-- Glideslope hold -->
+        <name>Glideslope Hold</name>
+        <debug>false</debug>
+        <enable>
+            <condition>
+                <equals>
+                    <property>instrumentation/fgc-65/internal/vertical</property>
+                    <value>GS</value>
+                </equals>
+            </condition>
+        </enable>
+        <input>
+            <property>/velocities/vertical-speed-fps</property>
+        </input>
+        <reference>
+            <property>/instrumentation/nav[0]/gs-rate-of-climb</property>
+        </reference>
+        <output>
+            <property>instrumentation/fgc-65/internal/fd/pitch</property>
+        </output>
+        <config>
+            <Kp>1.0</Kp>
+            <Ki>0.0</Ki>
+            <min>-1</min>
+            <max>1</max>
+        </config>
+    </pi-simple-controller>
+
+    <pid-controller> <!-- IAS hold -->
+        <name>IAS</name>
+        <debug>false</debug>
+        <enable>
+            <condition>
+                <equals>
+                    <property>instrumentation/fgc-65/internal/vertical</property>
+                    <value>IAS</value>
+                </equals>
+            </condition>
+        </enable>
+        <input>
+            <property>instrumentation/airspeed-indicator/indicated-speed-kt</property>
+        </input>
+        <reference>
+            <property>instrumentation/fgc-65/settings/ias</property>
+        </reference>
+        <output>
+            <property>instrumentation/fgc-65/internal/fd/pitch</property>
+        </output>
+        <config>
+            <Kp>-1.0</Kp>
+            <beta>1.0</beta>
+            <alpha>0.1</alpha>
+            <gamma>0.0</gamma>
+            <Ti>10.0</Ti>
+            <Td>0.0</Td>
+            <min>-1</min>
+            <max>1</max>
+        </config>
+    </pid-controller>
+
     <filter> <!-- Pitch Sample for V/S Hold -->
       <name>Pitch Sample</name>
       <debug>false</debug>
