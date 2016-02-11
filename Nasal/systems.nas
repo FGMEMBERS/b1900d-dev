@@ -44,7 +44,7 @@ var Wiper = {
         me.position.setValue(0);
         return;
         }
-    } 
+    }
 
     if(pos >=1.000){
         me.direction=-1;
@@ -112,13 +112,13 @@ var Alarm = {
 
 ###############
     check_caution:func{
-        var pwr=getprop("systems/electrical/volts") or 0;
+        var pwr=getprop("systems/electrical/outputs/caution-annunciator") or 0;
         if(pwr==0)return;
         var smpl=0;
         var Ctest=me.MCaution.getValue();
         if(Ctest){
-            var Cflash =me.MCflasher.getValue();
-            Cflash=1-Cflash;
+            var Cflash = me.MCflasher.getValue();
+            Cflash = 1-Cflash;
             me.MCflasher.setValue(Cflash);
         }else{
             me.MCflasher.setValue(Ctest);
@@ -162,7 +162,7 @@ var Alarm = {
     },
 ###############
     check_warning:func{
-        var pwr=getprop("systems/electrical/volts") or 0;
+        var pwr=getprop("systems/electrical/outputs/warning-annunciator") or 0;
         if(pwr==0)return;
         var testbutton=me.Wtest.getValue();
         var master=me.MWarning.getValue();
@@ -261,7 +261,7 @@ setlistener("/sim/signals/fdm-initialized", func {
     setprop("consumables/fuel/tank[1]/selected",1);
     setprop("consumables/fuel/tank[2]/selected",0);
     setprop("consumables/fuel/tank[3]/selected",0);
-     settimer(update_systems, 2);
+    settimer(update_systems, 2);
     settimer(update_alarms,0);
     });
 
@@ -296,13 +296,13 @@ var update_fuel = func{
     }
 
     if(getprop("consumables/fuel/tank[2]/selected")){
-        if(getprop("consumables/fuel/tank[2]/level-lbs")<=3.35){
+        if(getprop("consumables/fuel/tank[2]/level-lbs")<=3.35 and getprop("consumables/fuel/tank[0]/level-lbs")>0.0){
             setprop("consumables/fuel/tank[2]/selected",0);
             setprop("consumables/fuel/tank[0]/selected",1);
             }
         }
     if(getprop("consumables/fuel/tank[3]/selected")){
-        if(getprop("consumables/fuel/tank[3]/level-lbs")<=3.35){
+        if(getprop("consumables/fuel/tank[3]/level-lbs")<=3.35 and getprop("consumables/fuel/tank[1]/level-lbs")>0.0){
             setprop("consumables/fuel/tank[3]/selected",0);
             setprop("consumables/fuel/tank[1]/selected",1);
         }
@@ -439,10 +439,10 @@ controls.gearDown = func(v) {
 }
 
 controls.startEngine = func(v) {
-    if(getprop("systems/electrical/volts")==0)return;
-        if(getprop("controls/engines/engine[0]/selected"))setprop("/controls/engines/engine[0]/starter",v) 
+    if(getprop("systems/electrical/outputs/trip-fed-bus")==0)return;
+        if(getprop("controls/engines/engine[0]/selected"))setprop("/controls/engines/engine[0]/starter",v)
         else setprop("/controls/engines/engine[0]/starter",0);
-         if(getprop("controls/engines/engine[1]/selected"))setprop("/controls/engines/engine[1]/starter",v) 
+         if(getprop("controls/engines/engine[1]/selected"))setprop("/controls/engines/engine[1]/starter",v)
         else setprop("/controls/engines/engine[1]/starter",0);
 }
 
@@ -506,7 +506,7 @@ var update_engine = func(eng){
 
 
 var update_systems = func {
-    
+
     flight_meter();
     wiper.active();
     update_fuel();

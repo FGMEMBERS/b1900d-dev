@@ -1,10 +1,9 @@
 <?xml version="1.0"?>
 
-
     <system name="fuel">
 
-<property type="float" value="0">propulsion/engine[0]/fuel-consumption-pps</property>
-<property type="float" value="0">propulsion/engine[1]/fuel-consumption-pps</property>
+        <property type="float" value="0">propulsion/engine[0]/fuel-consumption-pps</property>
+        <property type="float" value="0">propulsion/engine[1]/fuel-consumption-pps</property>
 
         <channel name="Left egnine fuel burn">
 
@@ -15,17 +14,17 @@
                             <independentVar lookup="row">propulsion/engine/n1</independentVar>
                             <independentVar lookup="column">atmosphere/density-altitude</independentVar>
                             <tableData>
-                                     0      30000
+                                     0        30000
                             0        0        0
-                            15      0        0
-                            65      0.02916    0.025
-                            104    0.1666       0.1527
+                            15       0        0
+                            65       0.02916  0.025
+                            104      0.1666   0.1527
                             </tableData>
                         </table>
-                    </product>            
+                    </product>
                 </function>
-                <output>propulsion/engine[0]/fuel-consumption-pps</output>   
-            </fcs_function> 
+                <output>propulsion/engine[0]/fuel-consumption-pps</output>
+            </fcs_function>
 
             <pure_gain name="Lff">
                 <input>propulsion/engine[0]/fuel-consumption-pps</input>
@@ -53,7 +52,7 @@
 
        </channel>
 
-        <channel name="Right egnine fuel burn">
+       <channel name="Right egnine fuel burn">
 
             <fcs_function name="R_fuel burn rate pps">
                 <function>
@@ -69,10 +68,10 @@
                             104    0.1666       0.1527
                             </tableData>
                         </table>
-                    </product>            
+                    </product>
                 </function>
-                <output>propulsion/engine[1]/fuel-consumption-pps</output>   
-            </fcs_function> 
+                <output>propulsion/engine[1]/fuel-consumption-pps</output>
+            </fcs_function>
 
             <pure_gain name="Rff">
                 <input>propulsion/engine[1]/fuel-consumption-pps</input>
@@ -97,7 +96,5 @@
                 </test>
                 <output>propulsion/tank[3]/external-flow-rate-pps</output>
             </switch>
-
-       </channel>
-
+        </channel>
     </system>

@@ -8,6 +8,7 @@
         <startup>
             <splash-texture>Aircraft/b1900d/b1900dsplash.png</splash-texture>
         </startup>
+        <systems include="Systems/systems.xml"/>
     </sim>
 
     <engines>
@@ -131,11 +132,13 @@
 
 
     <nasal>
-        <systems>
-            <file>Aircraft/b1900d/Nasal/Electrical.nas</file>
+        <b1900d>
             <file>Aircraft/b1900d/Nasal/systems.nas</file>
             <file>Aircraft/b1900d/Nasal/kln90b.nas</file>
-        </systems>
+        </b1900d>
+        <electrical>
+            <file>Aircraft/b1900d/Nasal/Electrical.nas</file>
+        </electrical>
         <dialogs>
             <file>Aircraft/b1900d/Nasal/dialogs.nas</file>
         </dialogs>

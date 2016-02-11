@@ -1,34 +1,378 @@
 <?xml version="1.0"?>
 
 <PropertyList>
+    <electrical>
 
-  <electrical>
-    <path></path>
-  </electrical>
+        <!-- must be included -->
+        <path></path>
 
-  <pitot>
-    <name>pitot</name>
-    <number>0</number>
-  </pitot>
+        <component>
+            <kind type="string">battery</kind>
+            <name type="string">Battery</name>
+            <volts type="float">24</volts>
+            <prop type="string">/systems/electrical/suppliers/battery</prop>
+        </component>
 
-  <static>
-    <name>static</name>
-    <number>0</number>
-    <tau>1</tau>
-  </static>
+        <component>
+            <kind type="string">alternator</kind>
+            <name type="string">Left Alternator</name>
+            <volts type="float">28</volts>
+            <prop type="string">/systems/electrical/suppliers/alternator[0]</prop>
+            <source-prop type="string">/engines/engine[0]/n1</source-prop>
+            <source-min type="float">65</source-min>
+        </component>
 
-  <vacuum>
-    <name>vacuum</name>
-    <number>0</number>
-    <rpm>engines/engine[0]/n1</rpm>
-    <scale>20.0</scale>
-  </vacuum>
+        <component>
+            <kind type="string">alternator</kind>
+            <name type="string">Right Alternator</name>
+            <volts type="float">28</volts>
+            <prop type="string">/systems/electrical/suppliers/alternator[1]</prop>
+            <source-prop type="string">/engines/engine[1]/n1</source-prop>
+            <source-min type="float">65</source-min>
+        </component>
 
-  <vacuum>
-    <name>vacuum</name>
-    <number>1</number>
-    <rpm>engines/engine[1]/n1</rpm>
-    <scale>20.0</scale>
-  </vacuum>
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">Battery Bus</name>
+            <prop type="string">/systems/electrical/outputs/battery-bus</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">Left Gen Bus</name>
+            <prop type="string">/systems/electrical/outputs/left-gen-bus</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">Right Gen Bus</name>
+            <prop type="string">/systems/electrical/outputs/right-gen-bus</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">Triple Fed Bus</name>
+            <prop type="string">/systems/electrical/outputs/trip-fed-bus</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">Left Center Bus</name>
+            <prop type="string">/systems/electrical/outputs/left-center-bus</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">Right Center Bus</name>
+            <prop type="string">/systems/electrical/outputs/right-center-bus</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">Left Starter</name>
+            <prop type="string">/systems/electrical/outputs/starter[0]</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">Right Starter</name>
+            <prop type="string">/systems/electrical/outputs/starter[1]</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">Avionics Bus</name>
+            <prop type="string">/systems/electrical/outputs/avionics-bus</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">MK-VIII</name>
+            <prop type="string">/systems/electrical/outputs/mk-viii</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">NAV1</name>
+            <prop type="string">/systems/electrical/outputs/nav</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">NAV2</name>
+            <prop type="string">/systems/electrical/outputs/nav[1]</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">COM1</name>
+            <prop type="string">/systems/electrical/outputs/comm</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">COM2</name>
+            <prop type="string">/systems/electrical/outputs/comm[1]</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">Transponder</name>
+            <prop type="string">/systems/electrical/outputs/transponder</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">Turn Coordinator</name>
+            <prop type="string">/systems/electrical/outputs/turn-coordinator</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">GPS</name>
+            <prop type="string">/systems/electrical/outputs/gps</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">DME</name>
+            <prop type="string">/systems/electrical/outputs/dme</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">ADF</name>
+            <prop type="string">/systems/electrical/outputs/adf</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">FGC-65</name>
+            <prop type="string">/systems/electrical/outputs/fgc-65</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">Pilot Efis</name>
+            <prop type="string">/systems/electrical/outputs/efis[0]</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">Co-pilot Efis</name>
+            <prop type="string">/systems/electrical/outputs/efis[1]</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">Warning Annunciator</name>
+            <prop type="string">/systems/electrical/outputs/warning-annunciator</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">Caution Annunciator</name>
+            <prop type="string">/systems/electrical/outputs/caution-annunciator</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">LH AC BUS</name>
+            <prop type="string">/systems/electrical/LH-ac-bus</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">RH AC BUS</name>
+            <prop type="string">/systems/electrical/RH-ac-bus</prop>
+        </component>
+
+<!-- *****************    Connectors **************** -->
+
+        <connector>
+            <input type="string">Battery</input>
+            <output type="string">Battery Bus</output>
+            <switch type="string">/controls/electric/battery-switch</switch>
+        </connector>
+
+        <connector>
+            <input type="string">Left Alternator</input>
+            <output type="string">Left Gen Bus</output>
+            <switch type="string">/controls/electric/engine[0]/bus-tie</switch>
+        </connector>
+
+        <connector>
+            <input type="string">Right Alternator</input>
+            <output type="string">Right Gen Bus</output>
+            <switch type="string">/controls/electric/engine[1]/bus-tie</switch>
+        </connector>
+
+        <connector>
+            <input type="string">Battery</input>
+            <output type="string">Triple Fed Bus</output>
+            <switch type="string">/controls/electric/battery-switch</switch>
+        </connector>
+
+        <connector>
+            <input type="string">Left Gen Bus</input>
+            <output type="string">Triple Fed Bus</output>
+        </connector>
+
+        <connector>
+            <input type="string">Right Gen Bus</input>
+            <output type="string">Triple Fed Bus</output>
+        </connector>
+
+        <connector>
+            <input type="string">Battery</input>
+            <output type="string">Left Center Bus</output>
+            <switch type="string">/controls/electric/battery-switch</switch>
+        </connector>
+
+        <connector>
+            <input type="string">Battery</input>
+            <output type="string">Right Center Bus</output>
+            <switch type="string">/controls/electric/battery-switch</switch>
+        </connector>
+
+        <connector>
+            <input type="string">Triple Fed Bus</input>
+            <output type="string">Left Starter</output>
+            <scheme>scalar</scheme>
+            <switch type="string">/controls/engines/engine[0]/starter</switch>
+        </connector>
+
+        <connector>
+            <input type="string">Triple Fed Bus</input>
+            <output type="string">Right Starter</output>
+            <scheme>scalar</scheme>
+            <switch type="string">/controls/engines/engine[1]/starter</switch>
+        </connector>
+
+        <connector>
+            <input type="string">Triple Fed Bus</input>
+            <output type="string">Avionics Bus</output>
+            <switch type="string">/controls/electric/avionics-switch</switch>
+        </connector>
+
+        <connector>
+            <input type="string">Triple Fed Bus</input>
+            <output type="string">Warning Annunciator</output>
+        </connector>
+
+        <connector>
+            <input type="string">Triple Fed Bus</input>
+            <output type="string">Caution Annunciator</output>
+        </connector>
+
+        <connector>
+            <input type="string">Avionics Bus</input>
+            <output type="string">MK-VIII</output>
+        </connector>
+
+        <connector>
+            <input type="string">Avionics Bus</input>
+            <output type="string">NAV1</output>
+        </connector>
+
+        <connector>
+            <input type="string">Avionics Bus</input>
+            <output type="string">NAV2</output>
+        </connector>
+
+        <connector>
+            <input type="string">Avionics Bus</input>
+            <output type="string">COM1</output>
+        </connector>
+
+        <connector>
+            <input type="string">Avionics Bus</input>
+            <output type="string">COM2</output>
+        </connector>
+
+        <connector>
+            <input type="string">Avionics Bus</input>
+            <output type="string">Transponder</output>
+        </connector>
+
+        <connector>
+            <input type="string">Avionics Bus</input>
+            <output type="string">Turn Coordinator</output>
+        </connector>
+
+        <connector>
+            <input type="string">Avionics Bus</input>
+            <output type="string">GPS</output>
+        </connector>
+
+        <connector>
+            <input type="string">Avionics Bus</input>
+            <output type="string">DME</output>
+        </connector>
+
+        <connector>
+            <input type="string">Avionics Bus</input>
+            <output type="string">ADF</output>
+        </connector>
+
+        <connector>
+            <input type="string">Avionics Bus</input>
+            <output type="string">FGC-65</output>
+        </connector>
+
+        <connector>
+            <input type="string">Avionics Bus</input>
+            <output type="string">Pilot Efis</output>
+            <switch type="string">/controls/electric/efis/bank[0]</switch>
+        </connector>
+
+        <connector>
+            <input type="string">Avionics Bus</input>
+            <output type="string">Co-pilot Efis</output>
+            <switch type="string">/controls/electric/efis/bank[1]</switch>
+        </connector>
+<!-- Needs to be connected to Left Gen Bus and Right Gen Bus -->
+        <connector>
+            <input type="string">Left Gen Bus</input>
+            <output type="string">LH AC BUS</output>
+            <scheme>scalar</scheme>
+            <scalar-value>110</scalar-value>
+            <switch type="string">/controls/electric/LH-AC-bus</switch>
+        </connector>
+
+        <connector>
+            <input type="string">Right Gen Bus</input>
+            <output type="string">RH AC BUS</output>
+            <scheme>scalar</scheme>
+            <scalar-value>110</scalar-value>
+            <switch type="string">/controls/electric/RH-AC-bus</switch>
+        </connector>
+
+    </electrical>
+
+    <pitot>
+        <name>pitot</name>
+        <number>0</number>
+    </pitot>
+
+    <static>
+        <name>static</name>
+        <number>0</number>
+        <tau>1</tau>
+    </static>
+
+    <vacuum>
+        <name>vacuum</name>
+        <number>0</number>
+        <rpm>engines/engine[0]/n1</rpm>
+        <scale>20.0</scale>
+    </vacuum>
+
+    <vacuum>
+        <name>vacuum</name>
+        <number>1</number>
+        <rpm>engines/engine[1]/n1</rpm>
+        <scale>20.0</scale>
+    </vacuum>
 
 </PropertyList>
