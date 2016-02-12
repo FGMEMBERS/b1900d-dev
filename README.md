@@ -7,3 +7,4 @@ Feb/11/2016
   * More improvements to the electrical system
   * Master Panel switch now turns on all flightdeck backlighting
   * Added in ALS landing lights in cockpit view - thanks Thorsten
+  * more things that I can't ever remember
