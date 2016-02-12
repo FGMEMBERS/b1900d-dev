@@ -112,13 +112,16 @@ var Alarm = {
 
 ###############
     check_caution:func{
-        var pwr=getprop("systems/electrical/outputs/caution-annunciator") or 0;
-        if(pwr==0)return;
-        var smpl=0;
-        var Ctest=me.MCaution.getValue();
+        var pwr = getprop("systems/electrical/outputs/caution-annunciator") or 0;
+        if(pwr == 0) {
+            me.MCflasher.setValue(0);
+            return;
+        }
+        var smpl = 0;
+        var Ctest = me.MCaution.getValue();
         if(Ctest){
             var Cflash = me.MCflasher.getValue();
-            Cflash = 1-Cflash;
+            Cflash = 1 - Cflash;
             me.MCflasher.setValue(Cflash);
         }else{
             me.MCflasher.setValue(Ctest);
@@ -163,7 +166,6 @@ var Alarm = {
 ###############
     check_warning:func{
         var pwr=getprop("systems/electrical/outputs/warning-annunciator") or 0;
-        if(pwr==0)return;
         var testbutton=me.Wtest.getValue();
         var master=me.MWarning.getValue();
         var test1=0;
@@ -242,16 +244,12 @@ var Alarm = {
     }
 };
 
-
-
-
-
 var S_volume = props.globals.initNode("/sim/sound/E_volume",0.2);
 var Engstep = 0;
 var wiper = Wiper.new("controls/electric/wipers","systems/electrical/volts",3);
 var FHmeter = aircraft.timer.new("/instrumentation/clock/flight-meter-sec", 10);
 FHmeter.stop();
-var alert=Alarm.new("instrumentation/annunciators");
+var alert = Alarm.new("instrumentation/annunciators");
 
 setlistener("/sim/signals/fdm-initialized", func {
     setprop("/instrumentation/clock/flight-meter-hour",0);
@@ -309,17 +307,32 @@ var update_fuel = func{
     }
 }
 
+setlistener("/controls/lighting/landing-lights[0]", func(b) {
+    if(getprop("/sim/current-view/internal")) {
+        setprop("/sim/rendering/als-secondary-lights/use-landing-light", b.getValue());
+        setprop("/sim/rendering/als-secondary-lights/landing-light1-offset-deg", -5);
+    }
+},1 ,0);
+
+setlistener("/controls/lighting/landing-lights[1]", func(b) {
+    if(getprop("/sim/current-view/internal")) {
+        setprop("/sim/rendering/als-secondary-lights/use-alt-landing-light", b.getValue());
+        setprop("/sim/rendering/als-secondary-lights/landing-light2-offset-deg", 5);
+    }
+},1 ,0);
 
 setlistener("/sim/current-view/internal", func(vw){
     if(vw.getValue()){
         S_volume.setValue(0.2);
-        }else{
-            S_volume.setValue(1.0);
-        }
+    } else {
+        S_volume.setValue(1.0);
+        setprop("/sim/rendering/als-secondary-lights/use-landing-light", 0);
+        setprop("/sim/rendering/als-secondary-lights/use-alt-landing-light", 0);
+    }
 },1,0);
 
 setlistener("/sim/model/start-idling", func(idle){
-    var run= idle.getBoolValue();
+    var run = idle.getBoolValue();
     if(run){
         Startup();
     }else{
@@ -329,8 +342,10 @@ setlistener("/sim/model/start-idling", func(idle){
 
 setlistener("/gear/gear[1]/wow", func(gr){
     if(gr.getBoolValue()){
-    FHmeter.stop();setprop("gear/alarm-enabled",1);
-    }else{FHmeter.start();setprop("controls/cabin-door/open",0);}
+        FHmeter.stop(); setprop("gear/alarm-enabled",1);
+    } else {
+        FHmeter.start(); setprop("controls/cabin-door/open",0);
+    }
 },0,0);
 
 setlistener("controls/engines/engine[0]/condition", func(c1){
@@ -342,7 +357,6 @@ setlistener("controls/engines/engine[1]/condition", func(c2){
     if(c2.getValue() <= 0.01) fuel_cutoff[1]=1 else fuel_cutoff[1]=0;
     setprop("controls/engines/engine[1]/cutoff",fuel_cutoff[1]);
 },1,0);
-
 
 var Startup = func{
 setprop("controls/engines/engine[0]/cutoff",0);
@@ -447,25 +461,25 @@ controls.startEngine = func(v) {
 }
 
 var update_alarms = func {
-    if(alert.counter ==0){
+    if(alert.counter == 0){
         alert.check_caution();
-    }elsif(alert.counter ==1){
+    }elsif(alert.counter == 1){
         alert.check_warning();
     }
-    alert.counter =1-alert.counter;
-    settimer(update_alarms,0.25);
+    alert.counter = 1 - alert.counter;
+    settimer(update_alarms, 0.25);
 }
 
 var check_gear = func {
     if(getprop("controls/gear/gear-down")){
-        setprop("gear/alarm",0);
+        setprop("gear/alarm", 0);
         return;
     }
     var gd=0;
-    flp=getprop("controls/flight/flaps");
+    flp = getprop("controls/flight/flaps");
     if(flp==0.5){
         if(N1[0]<85 or N1[1]<85)
-        gd=getprop("gear/alarm-enabled");
+        gd = getprop("gear/alarm-enabled");
     }
     if(flp>0.5)gd=1;
     setprop("gear/alarm",gd);

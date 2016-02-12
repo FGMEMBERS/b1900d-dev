@@ -187,6 +187,30 @@
             <prop type="string">/systems/electrical/RH-ac-bus</prop>
         </component>
 
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">Instrument Lights</name>
+            <prop type="string">/systems/electrical/outputs/lights/instrument-lights</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">Engine Lights</name>
+            <prop type="string">/systems/electrical/outputs/lights/eng-lights</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">Left Landing Light</name>
+            <prop type="string">/systems/electrical/outputs/lights/landing-lights[0]</prop>
+        </component>
+
+        <component>
+            <kind type="string">output</kind>
+            <name type="string">Right Landing Light</name>
+            <prop type="string">/systems/electrical/outputs/lights/landing-lights[1]</prop>
+        </component>
+
 <!-- *****************    Connectors **************** -->
 
         <connector>
@@ -346,6 +370,30 @@
             <scheme>scalar</scheme>
             <scalar-value>110</scalar-value>
             <switch type="string">/controls/electric/RH-AC-bus</switch>
+        </connector>
+
+        <connector>
+            <input type="string">Left Gen Bus</input>
+            <output type="string">Instrument Lights</output>
+            <switch type="string">/controls/lighting/master-panel</switch>
+        </connector>
+
+        <connector>
+            <input type="string">Left Gen Bus</input>
+            <output type="string">Engine Lights</output>
+            <switch type="string">/controls/lighting/master-panel</switch>
+        </connector>
+
+        <connector>
+            <input type="string">Left Gen Bus</input>
+            <output type="string">Left Landing Light</output>
+            <switch type="string">/controls/lighting/landing-lights[0]</switch>
+        </connector>
+
+        <connector>
+            <input type="string">Left Gen Bus</input>
+            <output type="string">Right Landing Light</output>
+            <switch type="string">/controls/lighting/landing-lights[1]</switch>
         </connector>
 
     </electrical>

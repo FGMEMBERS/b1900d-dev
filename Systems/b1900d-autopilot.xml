@@ -475,7 +475,7 @@
             </condition>
         </enable>
         <input>
-            <property>instrumentation/attitude-indicator/indicated-pitch-deg</property>
+            <property>orientation/pitch-deg</property>
         </input>
         <reference>
             <property>instrumentation/fgc-65/settings/pitch</property>
@@ -503,7 +503,7 @@
             </condition>
          </enable>
         <input>
-            <property>instrumentation/attitude-indicator/indicated-pitch-deg</property>
+            <property>orientation/pitch-deg</property>
         </input>
         <reference>
             <property>instrumentation/fgc-65/internal/fd/pitch</property>

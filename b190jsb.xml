@@ -268,6 +268,7 @@
       <yaw>0.00</yaw>
     </orient>
     <feed>0</feed>
+    <feed>2</feed>
     <thruster file="prop">
      <location unit="M">
        <x>-2.231</x>
@@ -282,7 +283,7 @@
     </thruster>
   </engine>
 
-   <engine file="PT6A67D">
+  <engine file="PT6A67D">
     <location unit="M">
       <x>-0.952</x>
       <y>2.628</y>
@@ -294,6 +295,7 @@
       <yaw>0.00</yaw>
     </orient>
     <feed>1</feed>
+    <feed>3</feed>
     <thruster file="prop">
      <location unit="M">
        <x>-2.231</x>
@@ -347,32 +349,11 @@
      <capacity unit="LBS">621</capacity>
      <contents unit="LBS">200</contents>
   </tank>
-
-  <tank type="FUEL" number="4">
-     <location unit="M">
-       <x>0.00</x>
-       <y>1.499</y>
-       <z>-0.787</z>
-     </location>
-     <capacity unit="LBS">0.5</capacity>
-     <contents unit="LBS">0</contents>
-  </tank>
-
-  <tank type="FUEL" number="5">
-     <location unit="M">
-       <x>0.00</x>
-       <y>1.499</y>
-       <z>-0.787</z>
-     </location>
-     <capacity unit="LBS">0.5</capacity>
-     <contents unit="LBS">0</contents>
-  </tank>
-
- </propulsion>
+</propulsion>
 
 <system file="fuel"/>
 
- <flight_control name="FCS: b1900d">
+<flight_control name="FCS: b1900d">
 
 <channel name="Torque output">
    <pure_gain name="tq1">
