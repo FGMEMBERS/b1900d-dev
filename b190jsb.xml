@@ -267,8 +267,7 @@
       <roll>0.00</roll>
       <yaw>0.00</yaw>
     </orient>
-    <feed>0</feed>
-    <feed>2</feed>
+    <feed>4</feed>
     <thruster file="prop">
      <location unit="M">
        <x>-2.231</x>
@@ -294,8 +293,7 @@
       <roll>0.00</roll>
       <yaw>0.00</yaw>
     </orient>
-    <feed>1</feed>
-    <feed>3</feed>
+    <feed>5</feed>
     <thruster file="prop">
      <location unit="M">
        <x>-2.231</x>
@@ -349,6 +347,27 @@
      <capacity unit="LBS">621</capacity>
      <contents unit="LBS">200</contents>
   </tank>
+
+  <tank type="FUEL" number="4">
+     <location unit="M">
+       <x>0.00</x>
+       <y>-3.024</y>
+       <z>-0.586</z>
+     </location>
+     <capacity unit="LBS">70</capacity>
+     <contents unit="LBS">70</contents>
+  </tank>
+
+  <tank type="FUEL" number="5">
+     <location unit="M">
+       <x>0.00</x>
+       <y>3.024</y>
+       <z>-0.586</z>
+     </location>
+     <capacity unit="LBS">70</capacity>
+     <contents unit="LBS">70</contents>
+  </tank>
+
 </propulsion>
 
 <system file="fuel"/>

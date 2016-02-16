@@ -346,6 +346,14 @@ started July 2004 Syd Adams
             <name>R Aux</name>
             <level-gal_us type="double">0</level-gal_us>
         </tank>
+        <tank n="4">
+            <name>L Col</name>
+            <level-gal_us type="double">0</level-gal_us>
+        </tank>
+        <tank n="5">
+            <name>R Col</name>
+            <level-gal_us type="double">0</level-gal_us>
+        </tank>
     </fuel>
 </consumables>
 

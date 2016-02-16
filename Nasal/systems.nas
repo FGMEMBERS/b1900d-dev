@@ -255,10 +255,12 @@ setlistener("/sim/signals/fdm-initialized", func {
     setprop("/instrumentation/clock/flight-meter-hour",0);
     print("systems loaded");
     FDM=getprop("sim/flight-model");
-    setprop("consumables/fuel/tank[0]/selected",1);
-    setprop("consumables/fuel/tank[1]/selected",1);
-    setprop("consumables/fuel/tank[2]/selected",0);
-    setprop("consumables/fuel/tank[3]/selected",0);
+    setprop("consumables/fuel/tank[0]/selected",0);
+    setprop("consumables/fuel/tank[1]/selected",0);
+    setprop("consumables/fuel/tank[2]/selected",1);
+    setprop("consumables/fuel/tank[3]/selected",1);
+    setprop("/sim/rendering/als-secondary-lights/landing-light1-offset-deg", -8);
+    setprop("/sim/rendering/als-secondary-lights/landing-light2-offset-deg", 8);
     settimer(update_systems, 2);
     settimer(update_alarms,0);
     });
@@ -294,13 +296,13 @@ var update_fuel = func{
     }
 
     if(getprop("consumables/fuel/tank[2]/selected")){
-        if(getprop("consumables/fuel/tank[2]/level-lbs")<=3.35 and getprop("consumables/fuel/tank[0]/level-lbs")>0.0){
+        if(getprop("consumables/fuel/tank[2]/level-lbs") == 0.0){
             setprop("consumables/fuel/tank[2]/selected",0);
             setprop("consumables/fuel/tank[0]/selected",1);
             }
         }
     if(getprop("consumables/fuel/tank[3]/selected")){
-        if(getprop("consumables/fuel/tank[3]/level-lbs")<=3.35 and getprop("consumables/fuel/tank[1]/level-lbs")>0.0){
+        if(getprop("consumables/fuel/tank[3]/level-lbs") == 0.0){
             setprop("consumables/fuel/tank[3]/selected",0);
             setprop("consumables/fuel/tank[1]/selected",1);
         }
@@ -310,14 +312,14 @@ var update_fuel = func{
 setlistener("/controls/lighting/landing-lights[0]", func(b) {
     if(getprop("/sim/current-view/internal")) {
         setprop("/sim/rendering/als-secondary-lights/use-landing-light", b.getValue());
-        setprop("/sim/rendering/als-secondary-lights/landing-light1-offset-deg", -5);
+
     }
 },1 ,0);
 
 setlistener("/controls/lighting/landing-lights[1]", func(b) {
     if(getprop("/sim/current-view/internal")) {
         setprop("/sim/rendering/als-secondary-lights/use-alt-landing-light", b.getValue());
-        setprop("/sim/rendering/als-secondary-lights/landing-light2-offset-deg", 5);
+
     }
 },1 ,0);
 

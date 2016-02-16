@@ -55,6 +55,12 @@
             <tank n="3">
                  <priority alias="/consumables/fuel/tank[3]/selected"/>
             </tank>
+            <tank n="4">
+                 <priority alias="/consumables/fuel/tank[4]/selected"/>
+            </tank>
+            <tank n="4">
+                 <priority alias="/consumables/fuel/tank[5]/selected"/>
+            </tank>
         </propulsion>
         <fcs>
             <yaw-damper-enable alias="/instrumentation/fgc-65/app-65a/YD"/>
