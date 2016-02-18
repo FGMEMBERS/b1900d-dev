@@ -82,37 +82,38 @@ var Alarm = {
     m.warning_index=[];
     m.caution_index=[];
     m.node = props.globals.initNode(prop);
-    m.Warning= m.node.initNode("warning");
     m.Caution = m.node.initNode("caution");
-        m.MCaution = m.Caution.initNode("Master",0,"BOOL");
-        m.Ctest = m.Caution.initNode("test",0,"BOOL");
-        m.MCflasher = m.Caution.initNode("flasher",0,"INT");
-        m.Warning = m.node.initNode("warning");
-        m.MWarning = m.Warning.initNode("Master",0,"BOOL");
-        m.Wtest = m.Warning.initNode("test",0,"BOOL");
-        m.MWflasher = m.Warning.initNode("flasher",0,"INT");
-        m.GPWS = m.node.initNode("gpws");
-        m.volume=m.GPWS.initNode("volume",0.5,"DOUBLE");
-        m.altitude_active=m.GPWS.initNode("altitude-active",0,"BOOL");
-        m.altitude_callout=m.GPWS.initNode("altitude-callout",0,"INT");
-        m.terrain_active=m.GPWS.initNode("terrain-active",0,"BOOL");
-        m.terrain_alert=m.GPWS.initNode("terrain-alert",0,"BOOL");
-        m.bank=m.GPWS.initNode("bank-angle",0,"BOOL");
-        m.pitch=m.GPWS.initNode("pitch",0,"BOOL");
-        m.sink=m.GPWS.initNode("sink-rate",0,"BOOL");
-        m.minimums=m.GPWS.initNode("minimums",0,"BOOL");
-        for(var i=0; i<size(m.warning_props); i+=1) {
-            append(m.warning_index,m.Warning.initNode(m.warning_props[i],0,"BOOL"));
-        }
-        for(var i=0; i<size(m.caution_props); i+=1) {
-            append(m.caution_index,m.Caution.initNode(m.caution_props[i],0,"BOOL"));
-        }
+    m.MCaution = m.Caution.initNode("Master",0,"BOOL");
+    m.Ctest = m.Caution.initNode("test",0,"BOOL");
+    m.MCflasher = m.Caution.initNode("flasher",0,"INT");
+    m.Warning = m.node.initNode("warning");
+    m.MWarning = m.Warning.initNode("Master",0,"BOOL");
+    m.Wtest = m.Warning.initNode("test",0,"BOOL");
+    m.MWflasher = m.Warning.initNode("flasher",0,"INT");
+    m.GPWS = m.node.initNode("gpws");
+    m.volume=m.GPWS.initNode("volume",0.5,"DOUBLE");
+    m.altitude_active=m.GPWS.initNode("altitude-active",0,"BOOL");
+    m.altitude_callout=m.GPWS.initNode("altitude-callout",0,"INT");
+    m.terrain_active=m.GPWS.initNode("terrain-active",0,"BOOL");
+    m.terrain_alert=m.GPWS.initNode("terrain-alert",0,"BOOL");
+    m.bank=m.GPWS.initNode("bank-angle",0,"BOOL");
+    m.pitch=m.GPWS.initNode("pitch",0,"BOOL");
+    m.sink=m.GPWS.initNode("sink-rate",0,"BOOL");
+    m.minimums=m.GPWS.initNode("minimums",0,"BOOL");
+    for(var i=0; i<size(m.warning_props); i+=1) {
+        append(m.warning_index,m.Warning.initNode(m.warning_props[i],0,"BOOL"));
+    }
+    for(var i=0; i<size(m.caution_props); i+=1) {
+        append(m.caution_index,m.Caution.initNode(m.caution_props[i],0,"BOOL"));
+    }
+
     return m;
-    },
+},
 
 ###############
     check_caution:func{
         var pwr = getprop("systems/electrical/outputs/caution-annunciator") or 0;
+        print(pwr);
         if(pwr == 0) {
             me.MCflasher.setValue(0);
             return;
@@ -142,7 +143,7 @@ var Alarm = {
         smpl=1;me.MCaution.setValue(1);}
         me.caution_index[3].setValue(smpl);
         smpl=0;
-        if(!getprop("controls/electric/engine/generator")){
+        if(!getprop("controls/electric/engine[0]/generator")){
         smpl=1;me.MCaution.setValue(1);}
         me.caution_index[0].setValue(smpl);
         smpl=0;
@@ -442,24 +443,17 @@ var flight_meter = func{
 var fmeter = getprop("/instrumentation/clock/flight-meter-sec");
 var fminute = fmeter * 0.016666;
 var fhour = fminute * 0.016666;
-setprop("/instrumentation/clock/flight-meter-hour",fhour);
+setprop("/instrumentation/clock/flight-meter-hour", fhour);
 }
 
 controls.gearDown = func(v) {
-    if(getprop("controls/gear/gear-lock")) return;
+    if (getprop("controls/gear/gear-lock")) return;
     if (v < 0) {
-        if(!getprop("gear/gear[1]/wow"))setprop("/controls/gear/gear-down", 0);
+        if (!getprop("gear/gear[1]/wow"))
+            setprop("/controls/gear/gear-down", 0);
     } elsif (v > 0) {
       setprop("/controls/gear/gear-down", 1);
     }
-}
-
-controls.startEngine = func(v) {
-    if(getprop("systems/electrical/outputs/trip-fed-bus")==0)return;
-        if(getprop("controls/engines/engine[0]/selected"))setprop("/controls/engines/engine[0]/starter",v)
-        else setprop("/controls/engines/engine[0]/starter",0);
-         if(getprop("controls/engines/engine[1]/selected"))setprop("/controls/engines/engine[1]/starter",v)
-        else setprop("/controls/engines/engine[1]/starter",0);
 }
 
 var update_alarms = func {

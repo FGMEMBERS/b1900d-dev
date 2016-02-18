@@ -1,6 +1,8 @@
 jasin _at_ coleburt _dot_ com
 
 Patch Notes
+  * Redid the electrical system again, using the c182 as a base. Thanks Heiko
+
 Feb/15/2016
   * Fuel system improvements
   

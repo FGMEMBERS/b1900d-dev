@@ -6,7 +6,7 @@
   <maxn1>104.0</maxn1>
   <maxpower unit="HP">1279</maxpower>
   <psfc unit="LBS/HR/HP">0.0</psfc>
-  <idlefuelflow>0.0</idlefuelflow>
+  <CombustionEfficiency_N1>0.0</CombustionEfficiency_N1>
   <n1idle_max_delay>2</n1idle_max_delay>
   <maxstartingtime>1</maxstartingtime>
   <startern1>30</startern1>

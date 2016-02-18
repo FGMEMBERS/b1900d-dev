@@ -1,267 +1,411 @@
-# Electrical System
-#
-# Gary Neely aka 'Buckaroo'
-#
-# General-purpose electrical system for voltage propogation, loosely based on the Flightgear
-# system but implemented in nasal rather than C. See my related document for details and
-# configuration notes.
-#
-# For most purposes you will not need to edit this file. You might want to change the update
-# period, and if you choose a different component location you might want to change the
-# component path.
-#
-# Version 1.1. Released under GPL v2.
+##
+# Initialize internal values
 #
 
+var battery = nil;
+var left_alternator = nil;
+var right_alternator = nil;
 
-var ELECTRICAL_UPDATE	= 0.3;									# Update interval in seconds. Set to 0 for once/frame
-var component_path	= "/sim/systems/electrical";						# Location of component and connector lists
+var last_time = 0.0;
 
+var vbus_volts = 0.0;
+var ebus1_volts = 0.0;
+var ebus2_volts = 0.0;
 
+var ammeter_ave = 0.0;
 
-var component_list	= props.globals.getNode(component_path).getChildren("component");	# Get list of components
-var components		= {};									# Component hash
-var components_lastvolts= {};									# Quick test hash (see update section)
-var suppliers		= [];
-var connector_list	= props.globals.getNode(component_path).getChildren("connector");	# Get list of connectors
-var connectors		= [];									# Connector list
+var strobe_switch = props.globals.initNode("controls/lighting/strobe/switch",0,"BOOL");
+aircraft.light.new("controls/lighting/strobe", [0.05, 0.05, 0.05, 1.7], strobe_switch);
+var beacon_switch = props.globals.initNode("controls/lighting/beacon/switch",0,"BOOL");
+aircraft.light.new("controls/lighting/beacon", [1.0, 1.0], beacon_switch);
 
+##
+# Initialize the electrical system
+#
 
+init_electrical = func {
+    battery = BatteryClass.new();
+    left_alternator = AlternatorClass.new(0);
+	right_alternator = AlternatorClass.new(1);
 
-var electrical_update = func {
-										# Update suppliers:
-										# Mostly this is to update alternators based on the status
-										# of their source-prop, typically engine RPM. But it might
-										# also update the status of an external power souce, or a
-										# weakened or discharged battery. Currently these last two
-										# are stubs; fill in code if desired.
-  foreach(var supplier; suppliers) {
-    var volts = 0;
-    var ideal_volts = components[supplier].getNode("volts").getValue();		# Not very realistic, but good enough
-    var kind = components[supplier].getNode("kind").getValue();
-    if (kind == "alternator") {
-      var min = components[supplier].getNode("source-min").getValue();
-      var source_val = getprop(components[supplier].getNode("source-prop").getValue());
-      if (min == nil) { min = 0; }						# Minimum value may not yet be initialized
-      if (min == 0 or source_val >= min) {					# Alternator has good volts if source is up to speed
-        volts = ideal_volts;
-      }
-      else {
-        volts = source_val / min * ideal_volts;					# Otherwise it delivers some weak fractional voltage
-      }
+    # set initial switch positions
+	setprop("/controls/electric/battery-switch", 0, "BOOL");
+	setprop("/controls/electric/avionics-switch", 0, "BOOL");
+
+    # Request that the update function be called next frame
+    settimer(update_electrical, 0);
+    print("Electrical system initialized");
+}
+
+##
+# Battery model class.
+#
+
+BatteryClass = {};
+
+BatteryClass.new = func {
+    var obj = { parents : [BatteryClass],
+                ideal_volts : 24.0,
+                ideal_amps : 30.0,
+                amp_hours : 12.75,
+                charge_percent : 1.0,
+                charge_amps : 7.0 };
+    return obj;
+}
+
+##
+# Passing in positive amps means the battery will be discharged.
+# Negative amps indicates a battery charge.
+#
+
+BatteryClass.apply_load = func( amps, dt ) {
+    var amphrs_used = amps * dt / 3600.0;
+    var percent_used = amphrs_used / me.amp_hours;
+    var charge_percent = me.charge_percent;
+    charge_percent -= percent_used;
+    if ( charge_percent < 0.0 ) {
+        charge_percent = 0.0;
+    } elsif ( charge_percent > 1.0 ) {
+        charge_percent = 1.0;
     }
-    elsif (kind == "external") {						# Simple conditions for ground service
-      if (getprop("/gear/gear[0]/wow") and getprop("velocities/groundspeed-kt") < 0.1) {
-        volts = ideal_volts;
-      }
+    if ((charge_percent < 0.1)and(me.charge_percent >= 0.1))
+    {
+        print("Warning: Low battery! Enable alternator or apply external power to recharge battery.");
     }
-    else { #kind == "battery"							# Stub: currently batteries always show good volts.
-      volts = ideal_volts;
-    }
-    setprop(components[supplier].getNode("prop").getValue(),volts);
-  }
+    me.charge_percent = charge_percent;
+    setprop("/systems/electrical/battery-charge-percent", charge_percent);
+    # print( "battery percent = ", charge_percent);
+    return me.amp_hours * charge_percent;
+}
 
+##
+# Return output volts based on percent charged.  Currently based on a simple
+# polynomial percent charge vs. volts function.
+#
 
-										# The lastvolts hash keeps a record of the last
-										# setting of outputs. If a component can receive volts
-										# from 2 or more suppliers, we want the greatest of these
-										# otherwise one set to 0 might over-write one set to 28.
-  foreach(var i; keys(components_lastvolts)) {					# Reset lastvolts for each component
-    components_lastvolts[i] = -1;
-  }
-
-										# Propogate power:
-  foreach(var connector; connectors) {
-    var closed = 1;								# Circuit begins closed
-    var last_test = 0;
-    var switches = connector.getChildren("switch");				# Begin testing all associated switches
-    foreach(var switch; switches) {
-      last_test = getprop(switch.getValue());					# Save the last test for 'variable' outputs
-      if (last_test == nil or last_test == 0) {
-        closed = 0;								# Stop tests if any switch is open
-        break;
-      }
-    }
-    var input_component = components[connector.getNode("input").getValue()];
-    var output = connector.getNode("output").getValue();
-    var input_volts = 0;							# Default to an open circuit
-    if (closed) {								# Switches all tested positive
-      input_volts = getprop(input_component.getChildren("prop")[0].getValue());
-      if (input_volts == nil) { input_volts = 0; }				# Non-suppliers may not yet be initialized
-
-      if (input_volts > 0 and connector.getNode("variable") != nil) {		# Indicates special variable control switch output
-        if (connector.getNode("scale") != nil) {				# Indicates variable output scales input volts
-          input_volts = input_volts * last_test * connector.getNode("scale").getValue();
-        }
-        else {
-          input_volts = last_test;						# Output value takes on value of last switch output
-        }
-      }
-
-      var scheme = connector.getNode("scheme").getValue();			# Scheme stuff:
-      if (scheme == 0) {}							# Output is simply input volts
-      elsif (scheme == 1) {
-        input_volts = last_test;						# Propagate the last value of the last switch
-      }
-      elsif (scheme == 2) {
-        input_volts = input_volts * last_test;					# Propagate volts * the value of the last switch
-      }
-      elsif (scheme == 3) {
-        if (connector.getNode("scalar-value") != nil) {
-          input_volts = connector.getNode("scalar-value").getValue();		# Propagate a real number
-        }
-        elsif (connector.getNode("scalar-prop") != nil) {
-          input_volts = getprop(connector.getNode("scalar-prop").getValue());	# Propagate a real number from a property
-        }
-        else { input_volts = 1; }						# Should never see this if validations worked
-      }
-
-										# Factoring option:
-      if (input_volts > 0) {
-        if (connector.getNode("factor") != nil) {
-          input_volts = input_volts * connector.getNode("factor").getValue();
-        }
-        elsif (connector.getNode("factor-prop") != nil) {
-          input_volts = input_volts * getprop(connector.getNode("factor-prop").getValue());
-        }
-      }
-
-    }
-    if (input_volts > components_lastvolts[output]) {				# Update only if input > previous inputs
-      var output_component = components[output];
-      var output_props = output_component.getChildren("prop");
-      for (var i=0; i<size(output_props); i+=1) {				# Set component's outputs to new volts
-        setprop(output_props[i].getValue(),input_volts);
-      }
-      components_lastvolts[output] = input_volts;				# Record best input volts for this component
-    }
-  } # foreach connectors
-
-  settimer(electrical_update, ELECTRICAL_UPDATE);				# You go back, Jack, do it again...
+BatteryClass.get_output_volts = func {
+    var x = 1.0 - me.charge_percent;
+    var tmp = -(3.0 * x - 1.0);
+    var factor = (tmp*tmp*tmp*tmp*tmp + 32) / 32;
+    return me.ideal_volts * factor;
 }
 
 
+##
+# Return output amps available.  This function is totally wrong and should be
+# fixed at some point with a more sensible function based on charge percent.
+# There is probably some physical limits to the number of instantaneous amps
+# a battery can produce (cold cranking amps?)
+#
 
-var electrical_init = func {
-
-  print("Initializing electrical system...");
-  										# Validate and build component list:
-  for(var i=0; i<size(component_list); i+=1) {
-    										# Validations:
-    if (component_list[i].getNode("name") == nil) {
-      print("Error: missing name for component ",i);
-      continue;									# Skip component if no name
-    }
-    var name = component_list[i].getNode("name").getValue();
-    if (contains(components,name)) {
-      print("Error: duplicate component '",name,"'");
-      continue;									# Skip if duplicate
-    }
-    if (component_list[i].getNode("kind") == nil) {
-      print("Error: missing kind for component '",name,"'");
-      continue;									# Skip if no kind
-    }
-    var kind = component_list[i].getNode("kind").getValue();
-    if (kind != "battery" and
-        kind != "alternator" and
-        kind != "external" and
-        kind != "output") {
-      print("Error: bad kind for component '",name,"'");
-      continue;									# Skip if bad kind
-    }
-    var supplier = 0;
-    if (kind != "output") { supplier = 1; }
-    if (supplier and component_list[i].getNode("volts") == nil) {
-      print("Error: missing volts for supplier '",name,"'");
-      continue;									# Skip if supplier has no ideal volts
-    }
-    if (kind == "alternator" and component_list[i].getNode("source-prop") == nil) {
-      print("Error: missing source-prop for alternator '",name,"'");
-      continue;									# Skip if alternator and no source-prop
-    }
-    if (kind == "alternator" and component_list[i].getNode("source-min") == nil) {
-      print("Error: missing source-min for alternator '",name,"'");
-      continue;									# Skip if alternator and no source-min
-    }
-    if (size(component_list[i].getChildren("prop")) == 0) {
-      print("Error: missing prop component(s) for ",name);
-      continue;									# Skip if no properties
-    }
-  
-  										# All validations passed,
-    components[name]		= component_list[i];				# Add component to hash
-    components_lastvolts[name]	= 0;						# Setup quickie test hash
-    if (supplier) {
-      append(suppliers,name);							# Append supplier name to suppliers list
-    }
-  }
-  
-  
-  										# Validate and build connector list:
-  for(var i=0; i<size(connector_list); i+=1) {
-    										# Validations:
-    var name = "";
-    if (connector_list[i].getNode("name") != nil and
-        size(connector_list[i].getNode("name").getValue()) > 0) {		# Optional name field; used only in error reporting
-      name = " ("~connector_list[i].getNode("name").getValue()~")";		# form: ' (<name>) '
-    }
-    if (connector_list[i].getNode("input") == nil) {
-      print("Error: missing input for connector ",i,name);
-      continue;									# Skip connector if no input
-    }
-    var input = connector_list[i].getNode("input").getValue();
-    if (!contains(components,input)) {
-      print("Error: connector ",i,name," input: '",input,"' has no match in component list");
-      continue;									# Skip connector if input matches no component
-    }
-    if (connector_list[i].getNode("output") == nil) {
-      print("Error: missing output for connector ",i,name);
-      continue;									# Skip connector if no output
-    }
-    var output = connector_list[i].getNode("output").getValue();
-    if (!contains(components,output)) {
-      print("Error: connector ",i,name," output: '",output,"' has no match in component list");
-      continue;									# Skip connector if output matches no component
-    }
-    if (input == output) {
-      print("Error: connector ",i,name," tried to tie to itself");
-      continue;									# Skip connector if output matches input
-    }
-    if (components[output].getNode("kind").getValue() != "output") {
-      print("Error: connector ",i,name," tried to tie to a source");
-      continue;									# Skip connector if output is a source
-    }
-    if    (connector_list[i].getNode("scheme") == nil)				{ connector_list[i].getNode("scheme",1); connector_list[i].getNode("scheme").setValue(0); }
-    elsif (connector_list[i].getNode("scheme").getValue() == "volts")		{ connector_list[i].getNode("scheme").setValue(0); }
-    elsif (connector_list[i].getNode("scheme").getValue() == "switch")		{ connector_list[i].getNode("scheme").setValue(1); }
-    elsif (connector_list[i].getNode("scheme").getValue() == "switch-volts")	{ connector_list[i].getNode("scheme").setValue(2); }
-    elsif (connector_list[i].getNode("scheme").getValue() == "scalar")		{ connector_list[i].getNode("scheme").setValue(3); }
-    else {
-      print("Error: connector ",i,name," has an invalid scheme");
-      continue;									# Skip connector if bad scheme
-    }
-    if (connector_list[i].getNode("scheme").getValue() == 3) {
-      if (connector_list[i].getNode("scalar-value") == nil and
-          connector_list[i].getNode("scalar-prop") == nil) {
-        print("Error: connector ",i,name," scalar missing scalar-value or scalar-prop");
-        continue;								# Skip connector if bad scheme
-      }
-      if (connector_list[i].getNode("scalar-value") != nil and
-          connector_list[i].getNode("scalar-prop") != nil) {
-        print("Error: connector ",i,name," scalar has both scalar-value and scalar-prop");
-        continue;								# Skip connector if bad scheme
-      }
-    }
-  										# All validations passed,
-    append(connectors,connector_list[i]);					# Add connector to list
-  }
-  
-  print("...Done.");
+BatteryClass.get_output_amps = func {
+    var x = 1.0 - me.charge_percent;
+    var tmp = -(3.0 * x - 1.0);
+    var factor = (tmp*tmp*tmp*tmp*tmp + 32) / 32;
+    return me.ideal_amps * factor;
 }
 
 
+##
+# Alternator model class.
+#
 
-electrical_init();
-settimer(electrical_update, 3);
+AlternatorClass = {};
+
+AlternatorClass.new = func(source) {
+    var obj = { parents : [AlternatorClass],
+                rpm_source : "/engines/engine["~source~"]/n1",
+                rpm_threshold : 65.0,
+                ideal_volts : 28.0,
+                ideal_amps : 60.0 };
+    setprop( obj.rpm_source, 0.0 );
+    return obj;
+}
+
+##
+# Computes available amps and returns remaining amps after load is applied
+#
+
+AlternatorClass.apply_load = func( amps, dt ) {
+    # Scale alternator output for rpms < 800.  For rpms >= 800
+    # give full output.  This is just a WAG, and probably not how
+    # it really works but I'm keeping things "simple" to start.
+    var rpm = getprop( me.rpm_source );
+    var factor = rpm / me.rpm_threshold;
+    if ( factor > 1.0 ) {
+        factor = 1.0;
+    }
+    # print( "alternator amps = ", me.ideal_amps * factor );
+    var available_amps = me.ideal_amps * factor;
+    return available_amps - amps;
+}
+
+##
+# Return output volts based on rpm
+#
+
+AlternatorClass.get_output_volts = func {
+    # scale alternator output for rpms < 800.  For rpms >= 800
+    # give full output.  This is just a WAG, and probably not how
+    # it really works but I'm keeping things "simple" to start.
+	var factor = 0.0;
+    var rpm = getprop( me.rpm_source );
+	factor = rpm / me.rpm_threshold;
+	if ( factor > 1.0 ) {
+        factor = 1.0;
+    }
+    # print( "alternator volts = ", me.ideal_volts * factor );
+    return me.ideal_volts * factor;
+}
 
 
+##
+# Return output amps available based on rpm.
+#
+
+AlternatorClass.get_output_amps = func {
+    # scale alternator output for rpms < 800.  For rpms >= 800
+    # give full output.  This is just a WAG, and probably not how
+    # it really works but I'm keeping things "simple" to start.
+    var rpm = getprop( me.rpm_source );
+    var factor = rpm / me.rpm_threshold;
+    if ( factor > 1.0 ) {
+        factor = 1.0;
+    }
+    # print( "alternator amps = ", ideal_amps * factor );
+    return me.ideal_amps * factor;
+}
+
+
+##
+# This is the main electrical system update function.
+#
+
+update_electrical = func {
+    var time = getprop("/sim/time/elapsed-sec");
+    var dt = time - last_time;
+    last_time = time;
+
+    update_virtual_bus( dt );
+
+    # Request that the update function be called again next frame
+    settimer(update_electrical, 0);
+}
+
+update_virtual_bus = func( dt ) {
+    var serviceable = getprop("/systems/electrical/serviceable");
+    var external_volts = 0.0;
+    var load = 0.0;
+    var battery_volts = 0.0;
+    var left_alternator_volts = 0.0;
+	var right_alternator_volts = 0.0;
+    if ( serviceable ) {
+        battery_volts = battery.get_output_volts();
+        left_alternator_volts = left_alternator.get_output_volts();
+		right_alternator_volts = right_alternator.get_output_volts();
+    }
+
+	# switch state
+	var master_bat = getprop("/controls/electric/battery-switch");
+	var left_bus_tie = getprop("/controls/electric/engine[0]/bus-tie");
+	var right_bus_tie = getprop("/controls/electric/engine[1]/bus-tie");
+    var left_AC_bus_tie = getprop("/controls/electric/LH-AC-bus");
+    var right_AC_bus_tie = getprop("/controls/electric/RH-AC-bus");
+
+	if (getprop("/controls/electric/external-power"))
+	{
+		external_volts = 28;
+	}
+
+	# determine power source
+    var bus_volts = 0.0;
+    var power_source = nil;
+    if ( master_bat ) {
+        bus_volts = battery_volts;
+        power_source = "battery";
+    }
+
+	if (left_bus_tie) {
+		if (left_alternator_volts > bus_volts)
+			if (left_alternator_volts < 24)
+				bus_volts = 0.0;
+			else
+				bus_volts = left_alternator_volts;
+			power_source = "alternator";
+	}
+
+	if (right_bus_tie) {
+		if (right_alternator_volts > bus_volts)
+			if (right_alternator_volts < 24)
+				bus_volts = 0.0;
+			else
+				bus_volts = right_alternator_volts;
+			power_source = "alternator";
+    }
+
+    if (external_volts > bus_volts) {
+        bus_volts = external_volts;
+        power_source = "external";
+    }
+
+    setprop("/systems/electrical/LH-ac-bus", left_AC_bus_tie * 115);
+    setprop("/systems/electrical/RH-ac-bus", right_AC_bus_tie * 115);
+
+	################### DEBUG ###################
+    #print( "virtual bus volts = ", bus_volts );
+	#print( "l_alt volts = ", left_alternator_volts );
+	#print( "r_alt volts = ", right_alternator_volts );
+
+	load += battery_bus();
+	load += triple_fed_bus();
+	load += avionics_bus();
+	load += left_gen_bus();
+
+	if (bus_volts > 24)
+        vbus_volts = bus_volts;
+    else
+        vbus_volts = 0.0;
+
+	setprop("/systems/electrical/volts", vbus_volts);
+
+	return load;
+}
+
+battery_bus = func() {
+	# we are fed from the "virtual" bus
+	var bus_volts = vbus_volts;
+	var load = 0.0;
+
+	return load;
+}
+
+triple_fed_bus = func() {
+	# we are fed from the "virtual" bus
+	var bus_volts = vbus_volts;
+	var load = 0.0;
+	var l_starter_switch = getprop("/controls/electric/left-starter");
+	var r_starter_switch = getprop("/controls/electric/right-starter");
+
+	setprop("/systems/electrical/outputs/triple-fed-bus", bus_volts);
+	setprop("/systems/electrical/outputs/warning-annunciator", bus_volts);
+	setprop("/systems/electrical/outputs/caution-annunciator", bus_volts);
+
+	### check starter switch and toggle
+	if (l_starter_switch) {
+		setprop("controls/engines/engine[0]/starter", 1);
+		load += 12;
+	} else
+		setprop("controls/engines/engine[0]/starter", 0);
+
+	if (r_starter_switch) {
+		setprop("/controls/engines/engine[1]/starter", 1);
+		load += 12;
+	} else
+		setprop("controls/engines/engine[1]/starter", 0);
+
+	return load;
+}
+
+### TODO - add redundancy if triple-fed-bus fails
+left_gen_bus = func() {
+	var bus_volts = vbus_volts;
+	var load = 0.0;
+	var left_landing_light = getprop("/controls/lighting/landing-lights[0]");
+	var right_landing_light = getprop("/controls/lighting/landing-lights[1]");
+	var taxi_light = getprop("/controls/lighting/taxi-lights");
+	var ice_light = getprop("/controls/lighting/ice-lights");
+	var nav_light = getprop("/controls/lighting/nav-lights");
+	var beacon_light = getprop("/controls/lighting/beacon/switch");
+	var strobe_light = getprop("/controls/lighting/strobe/switch");
+	var logo_light = getprop("/controls/lighting/logo-lights");
+	var recog_light = getprop("/controls/lighting/recog-lights");
+	var master_panel_switch = getprop("/controls/lighting/master-panel");
+
+	if (left_landing_light)
+		setprop("/systems/electrical/outputs/lights/landing-lights[0]", 1);
+	else
+		setprop("/systems/electrical/outputs/lights/landing-lights[0]", 0);
+	if (right_landing_light)
+		setprop("/systems/electrical/outputs/lights/landing-lights[1]", 1);
+	else
+		setprop("/systems/electrical/outputs/lights/landing-lights[1]", 0);
+	if (taxi_light)
+		setprop("/systems/electrical/outputs/lights/taxi-lights", bus_volts);
+	else
+		setprop("/systems/electrical/outputs/lights/taxi-lights", 0);
+	if (ice_light)
+		setprop("/systems/electrical/outputs/lights/ice-lights", bus_volts);
+	else
+		setprop("/systems/electrical/outputs/lights/ice-lights", 0);
+	if (nav_light)
+		setprop("/systems/electrical/outputs/lights/nav-lights", bus_volts);
+	else
+		setprop("/systems/electrical/outputs/lights/nav-lights", 0);
+	if (beacon_light) {
+		setprop("/systems/electrical/outputs/lights/beacon[0]", 1);
+		setprop("/systems/electrical/outputs/lights/beacon[1]", 1);
+	} else {
+		setprop("/systems/electrical/outputs/lights/beacon[0]", 0);
+		setprop("/systems/electrical/outputs/lights/beacon[1]", 0);
+	}
+	if (strobe_light)
+		setprop("/systems/electrical/outputs/lights/strobe", bus_volts);
+	else
+		setprop("/systems/electrical/outputs/lights/strobe", 0);
+	if (logo_light)
+		setprop("/systems/electrical/outputs/lights/logo-lights", 1);
+	else
+		setprop("/systems/electrical/outputs/lights/logo-lights", 0);
+	if (master_panel_switch) {
+		setprop("/systems/electrical/outputs/lights/instrument-lights", bus_volts);
+		setprop("/systems/electrical/outputs/lights/eng-lights", bus_volts);
+	} else {
+		setprop("/systems/electrical/outputs/lights/instrument-lights", 0);
+		setprop("/systems/electrical/outputs/lights/eng-lights", 0);
+	}
+
+	return load;
+}
+
+right_gen_bus = func() {
+	var load = 0.0;
+
+	return load;
+}
+###
+
+avionics_bus = func() {
+	# we are fed from virtual bus
+	var load = 0.0;
+	var avionics_switch = getprop("/controls/electric/avionics-switch");
+	var pilot_efis_switch = getprop("/controls/electric/efis/bank[0]");
+	var copilot_efis_switch = getprop("/controls/electric/efis/bank[1]");
+
+	if (avionics_switch){
+		var bus_volts = vbus_volts;
+	} else
+		bus_volts = 0.0;
+
+	setprop("/systems/electrical/outputs/nav[0]", bus_volts);
+	setprop("/systems/electrical/outputs/nav[1]", bus_volts);
+	setprop("/systems/electrical/outputs/comm[0]", bus_volts);
+	setprop("/systems/electrical/outputs/comm[1]", bus_volts);
+	setprop("/systems/electrical/outputs/dme", bus_volts);
+	setprop("/systems/electrical/outputs/adf", bus_volts);
+	setprop("/systems/electrical/outputs/gps", bus_volts);
+	setprop("/systems/electrical/outputs/transponder", bus_volts);
+	setprop("/systems/electrical/outputs/turn-coordinator", bus_volts);
+	setprop("/systems/electrical/outputs/mk-viii", bus_volts);
+	setprop("/systems/electrical/outputs/fgc-65", bus_volts);
+
+	if (pilot_efis_switch)
+		setprop("/systems/electrical/outputs/efis[0]", bus_volts);
+	if (copilot_efis_switch)
+		setprop("/systems/electrical/outputs/efis[1]", bus_volts);
+
+
+
+	return load;
+}
+
+settimer(init_electrical, 0);
