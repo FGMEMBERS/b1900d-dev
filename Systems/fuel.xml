@@ -5,11 +5,6 @@
         <property type="float" value="0">propulsion/engine[0]/fuel-consumption-pps</property>
         <property type="float" value="0">propulsion/engine[1]/fuel-consumption-pps</property>
 
-        <property value="1">propulsion/tank[0]/collector-valve</property>
-        <property value="1">propulsion/tank[1]/collector-valve</property>
-        <property value="1">propulsion/tank[2]/collector-valve</property>
-        <property value="1">propulsion/tank[3]/collector-valve</property>
-
         <!-- Recieve fuel from active tank and send to collector, engine feeds off collector -->
         <channel name="Left engine fuel burn">
 
@@ -66,7 +61,7 @@
                 </test>
             </switch>
 
-            <summer>
+            <summer name="Tank 4 net flow">
                 <input>-fuel/tank0-to-tank4</input>
                 <input>-fuel/tank2-to-tank4</input>
                 <input>fuel/tank4-to-left-engine</input>
@@ -129,7 +124,7 @@
                 </test>
             </switch>
 
-            <summer>
+            <summer name="Tank 5 net flow">
                 <input>-fuel/tank1-to-tank5</input>
                 <input>-fuel/tank3-to-tank5</input>
                 <input>fuel/tank5-to-right-engine</input>

@@ -6,7 +6,6 @@
   <maxn1>104.0</maxn1>
   <maxpower unit="HP">1279</maxpower>
   <psfc unit="LBS/HR/HP">0.0</psfc>
-  <CombustionEfficiency_N1>0.0</CombustionEfficiency_N1>
   <n1idle_max_delay>2</n1idle_max_delay>
   <maxstartingtime>1</maxstartingtime>
   <startern1>30</startern1>
@@ -47,7 +46,6 @@
     </tableData>
   </table>
 
-
   <table name="ITT_N1" type="internal">
     <description> Inter-Turbine Temperature ITT [deg C] depending on N1 and engine run (0=off / 1=running) </description>
     <tableData>
@@ -58,5 +56,13 @@
       104   300   800
     </tableData>
   </table>
+
+<!--
+  <table name="CombustionEfficiency_N1" type="internal">
+    <tableData>
+
+     </tableData>
+  </table>
+-->
 
 </turboprop_engine>

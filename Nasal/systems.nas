@@ -245,9 +245,9 @@ var Alarm = {
     }
 };
 
-var S_volume = props.globals.initNode("/sim/sound/E_volume",0.2);
+var S_volume = props.globals.initNode("/sim/sound/E_volume", 0.2);
 var Engstep = 0;
-var wiper = Wiper.new("controls/electric/wipers","systems/electrical/volts",3);
+var wiper = Wiper.new("controls/electric/wipers","systems/electrical/volts", 3);
 var FHmeter = aircraft.timer.new("/instrumentation/clock/flight-meter-sec", 10);
 FHmeter.stop();
 var alert = Alarm.new("instrumentation/annunciators");
@@ -256,14 +256,14 @@ setlistener("/sim/signals/fdm-initialized", func {
     setprop("/instrumentation/clock/flight-meter-hour",0);
     print("systems loaded");
     FDM=getprop("sim/flight-model");
-    setprop("consumables/fuel/tank[0]/selected",0);
-    setprop("consumables/fuel/tank[1]/selected",0);
-    setprop("consumables/fuel/tank[2]/selected",1);
-    setprop("consumables/fuel/tank[3]/selected",1);
-    setprop("/sim/rendering/als-secondary-lights/landing-light1-offset-deg", -8);
-    setprop("/sim/rendering/als-secondary-lights/landing-light2-offset-deg", 8);
+    setprop("consumables/fuel/tank[0]/selected", 0);
+    setprop("consumables/fuel/tank[1]/selected", 0);
+    setprop("consumables/fuel/tank[2]/selected", 1);
+    setprop("consumables/fuel/tank[3]/selected", 1);
+    setprop("/sim/rendering/als-secondary-lights/landing-light1-offset-deg", 8);
+    setprop("/sim/rendering/als-secondary-lights/landing-light2-offset-deg", -8);
     settimer(update_systems, 2);
-    settimer(update_alarms,0);
+    settimer(update_alarms, 0);
     });
 
 
@@ -288,6 +288,9 @@ setlistener("controls/fuel/Raux-switch", func(raux){
 },0,0);
 
 var update_fuel = func{
+    setprop("/consumables/fuel/tank[4]/selected", 1);
+    setprop("/consumables/fuel/tank[5]/selected", 1);
+
     if(getprop("controls/fuel/gauge-switch")=="auxilary"){
         setprop("consumables/fuel/gauge[0]",getprop("consumables/fuel/tank[2]/level-lbs"));
         setprop("consumables/fuel/gauge[1]",getprop("consumables/fuel/tank[3]/level-lbs"));

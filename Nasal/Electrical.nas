@@ -229,18 +229,20 @@ update_virtual_bus = func( dt ) {
 		if (left_alternator_volts > bus_volts)
 			if (left_alternator_volts < 24)
 				bus_volts = 0.0;
-			else
+			else {
 				bus_volts = left_alternator_volts;
-			power_source = "alternator";
+			    power_source = "alternator";
+            }
 	}
 
 	if (right_bus_tie) {
 		if (right_alternator_volts > bus_volts)
 			if (right_alternator_volts < 24)
 				bus_volts = 0.0;
-			else
+			else {
 				bus_volts = right_alternator_volts;
-			power_source = "alternator";
+			    power_source = "alternator";
+            }
     }
 
     if (external_volts > bus_volts) {
@@ -261,12 +263,34 @@ update_virtual_bus = func( dt ) {
 	load += avionics_bus();
 	load += left_gen_bus();
 
+    # system loads and ammeter gauge
+    var ammeter = 0.0;
+    if ( bus_volts > 1.0 ) {
+        # ammeter gauge
+        if ( power_source == "battery" ) {
+            ammeter = -load;
+        } else {
+            ammeter = battery.charge_amps;
+        }
+    }
+
+    # charge/discharge the battery
+    if ( power_source == "battery" ) {
+        battery.apply_load( load, dt );
+    } elsif ( bus_volts > battery_volts ) {
+        battery.apply_load( -battery.charge_amps, dt );
+    }
+
+    # filter ammeter needle pos
+    ammeter_ave = 0.8 * ammeter_ave + 0.2 * ammeter;
+
 	if (bus_volts > 24)
         vbus_volts = bus_volts;
     else
         vbus_volts = 0.0;
 
-	setprop("/systems/electrical/volts", vbus_volts);
+	setprop("/systems/electrical/volts", bus_volts);
+    setprop("/systems/electrical/amps", ammeter_ave);
 
 	return load;
 }
@@ -321,48 +345,23 @@ left_gen_bus = func() {
 	var recog_light = getprop("/controls/lighting/recog-lights");
 	var master_panel_switch = getprop("/controls/lighting/master-panel");
 
-	if (left_landing_light)
-		setprop("/systems/electrical/outputs/lights/landing-lights[0]", 1);
-	else
-		setprop("/systems/electrical/outputs/lights/landing-lights[0]", 0);
-	if (right_landing_light)
-		setprop("/systems/electrical/outputs/lights/landing-lights[1]", 1);
-	else
-		setprop("/systems/electrical/outputs/lights/landing-lights[1]", 0);
-	if (taxi_light)
-		setprop("/systems/electrical/outputs/lights/taxi-lights", bus_volts);
-	else
-		setprop("/systems/electrical/outputs/lights/taxi-lights", 0);
-	if (ice_light)
-		setprop("/systems/electrical/outputs/lights/ice-lights", bus_volts);
-	else
-		setprop("/systems/electrical/outputs/lights/ice-lights", 0);
-	if (nav_light)
-		setprop("/systems/electrical/outputs/lights/nav-lights", bus_volts);
-	else
-		setprop("/systems/electrical/outputs/lights/nav-lights", 0);
-	if (beacon_light) {
-		setprop("/systems/electrical/outputs/lights/beacon[0]", 1);
-		setprop("/systems/electrical/outputs/lights/beacon[1]", 1);
-	} else {
-		setprop("/systems/electrical/outputs/lights/beacon[0]", 0);
-		setprop("/systems/electrical/outputs/lights/beacon[1]", 0);
-	}
-	if (strobe_light)
-		setprop("/systems/electrical/outputs/lights/strobe", bus_volts);
-	else
-		setprop("/systems/electrical/outputs/lights/strobe", 0);
-	if (logo_light)
-		setprop("/systems/electrical/outputs/lights/logo-lights", 1);
-	else
-		setprop("/systems/electrical/outputs/lights/logo-lights", 0);
-	if (master_panel_switch) {
-		setprop("/systems/electrical/outputs/lights/instrument-lights", bus_volts);
-		setprop("/systems/electrical/outputs/lights/eng-lights", bus_volts);
-	} else {
-		setprop("/systems/electrical/outputs/lights/instrument-lights", 0);
-		setprop("/systems/electrical/outputs/lights/eng-lights", 0);
-	}
+	setprop("/systems/electrical/outputs/lights/landing-lights[0]", 1*left_landing_light);
+	setprop("/systems/electrical/outputs/lights/landing-lights[1]", 1*right_landing_light);
+    setprop("/systems/electrical/outputs/lights/logo-lights", 1*logo_light);
+    if (taxi_light) setprop("/systems/electrical/outputs/lights/taxi-lights", 1*bus_volts);
+	if (ice_light) setprop("/systems/electrical/outputs/lights/ice-lights", 1*bus_volts);
+	if (nav_light) setprop("/systems/electrical/outputs/lights/nav-lights", bus_volts);
+    if (master_panel_switch) {
+        setprop("/systems/electrical/outputs/lights/instrument-lights", 1*bus_volts);
+	    setprop("/systems/electrical/outputs/lights/eng-lights", 1*bus_volts);
+    }
+    # setprop("/systems/electrical/outputs/lights/beacon[0]", 1*beacon_light);
+	# setprop("/systems/electrical/outputs/lights/beacon[1]", 1*beacon_light);
+	# setprop("/systems/electrical/outputs/lights/strobe", 1*bus_volts);
+
+    ### Make them flash
+    if(strobe_light or beacon_light)
+        update_strobes();
 
 	return load;
 }
@@ -403,9 +402,15 @@ avionics_bus = func() {
 	if (copilot_efis_switch)
 		setprop("/systems/electrical/outputs/efis[1]", bus_volts);
 
-
-
 	return load;
 }
 
+update_strobes = func() {
+    var bcn = getprop("controls/lighting/beacon/state");
+    setprop("systems/electrical/outputs/lights/strobe", 1 * getprop("controls/lighting/strobe/state"));
+    setprop("systems/electrical/outputs/lights/beacon[0]", 1 * bcn);
+    setprop("systems/electrical/outputs/lights/beacon[1]", 1 * (1-bcn));
+}
+
+### Upon load, initialize electrical systems immediately
 settimer(init_electrical, 0);
